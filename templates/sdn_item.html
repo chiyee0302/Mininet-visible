@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mininet Topology</title>
+</head>
+<body>
+    <div class="optionMenu">
+       
+        <button>添加主机</button>
+        <button>添加链路</button>
+        <button>添加交换机</button>
+        <button>删除交换机</button>
+        <button>删除主机</button>
+        <button>删除链路</button>
+    </div>
+    <div class="addHost" v-if="false">
+        <form method="post" action="/add_host">
+            <label for="new_host">New Host Name:</label>
+            <input type="text" id="new_host" name="new_host_name" required>
+            <br>
+            <label for="new_host">Host IP:</label>
+            <input type="text" id="new_host" name="new_host_ip" required>
+            <br>
+            <label for="new_host">Link Switch</label>
+            <input type="text" id="new_host" name="switch_name" required>
+            <br>
+            <button type="submit">Add Host</button>
+        </form>
+    </div>
+    <div class="">
+        <form method="post" action="/add_switch">
+            <label>Switch Name:</label>
+            <input type="text" name="new_switch_name" required>
+            <br>
+            <button type="submit">Add Switch</button>
+        </form>
+    </div>
+    <div class="">
+        <form method="post" action="/add_link">
+            <label>Node 1:</label>
+            <input type="text" name="node1" required>
+            <br>
+            <label>Node 2:</label>
+            <input type="text" name="node2" required>
+            <br>
+            <button type="submit">Add Link</button>
+        </form>
+    </div>
+    <div class="">
+        <form method="post" action="/del_host">
+            <label>Host Name:</label>
+            <input type="text" name="del_host_name" required>
+            <br>
+            <button type="submit">Del Host</button>
+        </form>
+    </div>
+    <div class="">
+        <form method="post" action="/del_switch">
+            <label>switch Name:</label>
+            <input type="text" name="del_switch_name" required>
+            <br>
+            <button type="submit">Del Switch</button>
+        </form>
+    </div>
+    <div class="">
+        <form method="post" action="/del_link">
+            <label>Node 1:</label>
+            <input type="text" name="node1" required>
+            <br>
+            <label>Node 2:</label>
+            <input type="text" name="node2" required>
+            <br>
+            <button type="submit">Del Link</button>
+        </form>
+    </div>
+    <canvas id="topologyCanvas" width="2000" height="2000"></canvas>
+    <script>
+        var canvas = document.getElementById("topologyCanvas");
+        var context = canvas.getContext("2d");
+
+        // 缩放因子
+        var scale = 2;
+
+        // Topology data received from Flask
+        var topologyData = {{ topology_data|tojson|safe }};
+        console.log(topologyData);
+
+        // Draw hosts
+        topologyData.hosts.forEach(function (hostName, index) {
+            context.fillStyle = "yellow";
+            context.beginPath();
+            var x = 50 * scale; // 扩大坐标值
+            var y = (index + 1) * 100 * scale; // 扩大坐标值
+            var radius = 20 * scale; // 扩大半径
+            context.arc(x, y, radius, 0, 2 * Math.PI);
+            context.fill();
+            context.stroke();
+            context.fillStyle = "black";
+            context.font = "16px Arial"; // 设置字体大小
+            context.fillText(hostName[0], x - 10 * scale, y + 5 * scale);
+            context.fillText("ip: " + hostName[1], x - 20 * scale, y + 30 * scale);
+            context.fillText("MAC: " + hostName[2], x - 20 * scale, y + 40 * scale);
+        });
+
+        // Draw switches
+        topologyData.switches.forEach(function (switchName, index) {
+            context.fillStyle = "green";
+            context.fillRect(200 * scale, index * 100 * scale + 30 * scale, 60 * scale, 40 * scale); // 扩大坐标值和尺寸
+            context.fillStyle = "white";
+            context.font = "16px Arial"; // 设置字体大小
+            context.fillText(switchName, 210 * scale, index * 100 * scale + 60 * scale);
+        });
+
+        // Draw links
+        topologyData.links.forEach(function (link) {
+            var node1X;
+            var node1Y;
+            var node2X;
+            var node2Y;
+            if (topologyData.hosts.findIndex(function (element) { return element[0] === link[0]; }) === -1) {
+                node1X = 200 * scale;
+                node1Y = (topologyData.switches.indexOf(link[0]) * 100 * scale) + 50 * scale;
+            } else {
+                node1X = 50 * scale;
+                node1Y = (topologyData.hosts.findIndex(function (element) { return element[0] === link[0]; }) + 1) * 100 * scale;
+            }
+            if (topologyData.hosts.findIndex(function (element) { return element[0] === link[1]; }) === -1) {
+                node2X = 200 * scale;
+                node2Y = (topologyData.switches.indexOf(link[1]) * 100 * scale) + 50 * scale;
+            } else {
+                node2X = 50 * scale;
+                node2Y = (topologyData.hosts.findIndex(function (element) { return element[0] === link[1]; }) + 1) * 100 * scale;
+            }
+            
+            context.beginPath();
+            context.moveTo(node1X + 20 * scale, node1Y);
+            context.lineTo(node2X + 20 * scale, node2Y);
+            context.stroke();
+        });
+    </script>
+</body>
+</html>
